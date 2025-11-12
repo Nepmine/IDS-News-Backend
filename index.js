@@ -23,14 +23,9 @@ const fastify = Fastify({
   },
 });
 
-// fastify.register(fastifyCors, {
-//   // origin: process.env.CROS_ORIGIN_WHITELIST,
-//   origin: true,
-//   credentials: true,
-// });
-
 fastify.register(fastifyCors, {
-  origin: ["http://localhost:5173", "http://localhost:3000"],
+  // origin: [process.env.CORS_ORIGIN_WHITELIST, "http://localhost:5173"],
+  origin: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
@@ -66,10 +61,12 @@ fastify.register(postRoutes, { prefix: "/api/post" });
 fastify.get("/ping", async function handler(req, res) {
   return res.status(200).send("PONG");
 });
+
+const PORT = process.env.PORT || 8000;
 // Run the server!
 try {
-  await fastify.listen({ port: 8000 });
-  console.log("/n/nFastify is listning ....");
+  await fastify.listen({ port: PORT, host: "0.0.0.0" });
+  console.log(`\n✅ Fastify is listening on port ${PORT} ...`);
 } catch (err) {
   fastify.log.error(err);
   process.exit(1);
