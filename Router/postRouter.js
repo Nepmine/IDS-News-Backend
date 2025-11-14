@@ -7,6 +7,7 @@ import {
   deletePost,
   comment,
   editComment,
+  likeComment,
   deleteComment,
   allTrendings,
   addTrending,
@@ -99,6 +100,9 @@ export default async function (fastify, opts) {
 
   // [GET] http://localhost:8000/api/post/comment
   fastify.post("/comment", { preHandler: auth }, comment);
+
+  // [GET] http://localhost:8000/api/post/likeComment
+  fastify.post("/likeComment", { preHandler: auth }, likeComment);
 
   // [GET] http://localhost:8000/api/post/editComment
   fastify.post("/editComment", { preHandler: auth }, editComment);

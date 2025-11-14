@@ -358,6 +358,21 @@ export const deletePost = async (req, reply) => {
     // [Modified] Extract postId from body
     const { postId } = req.body;
 
+    // Delete comments associated with the post
+    await prisma.comment.deleteMany({
+      where: { postId },
+    });
+
+    // Remove postId from users who liked this post
+    await prisma.user.updateMany({
+      where: { likedPostIds: postId },
+      data: {
+        likedPostIds: {
+          pull: postId,
+        },
+      },
+    });
+
     // [Modified] Perform the update
     const deletedPost = await prisma.post.delete({
       where: { postId },
@@ -463,6 +478,7 @@ export const getHomePosts = async (req, res) => {
         updatedAt: true,
         trending: true,
         category: true,
+        content: true,
 
         // include comments with only the fields we want
         comments: {
@@ -492,6 +508,7 @@ export const getPost = async (req, res) => {
           include: {
             user: {
               select: {
+                userId: true,
                 name: true,
                 givenName: true,
                 photoUrl: true,
@@ -609,6 +626,78 @@ export const editComment = async (req, res) => {
   } catch (ex) {
     console.error("Exception while updating comment:", ex);
     return res.status(500).send("Failed to update comment");
+  }
+};
+
+// [POST] http://localhost:8000/api/post/likeComment
+// Data required: commentId
+export const likeComment = async (req, res) => {
+  const { commentId } = req.body;
+  const googleId = req.user.sub;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { googleId },
+      select: { userId: true },
+    });
+
+    if (!user) {
+      return res.status(404).send("User not logged in!");
+    }
+
+    const comment = await prisma.comment.findUnique({
+      where: { commentId },
+      select: {
+        commentId: true,
+        likes: true,
+        likedUserIds: true,
+      },
+    });
+
+    if (!comment) {
+      return res.status(404).send("Comment not found");
+    }
+
+    const hasLiked = comment.likedUserIds.includes(user.userId);
+
+    if (hasLiked) {
+      // Unlike the comment
+      await prisma.comment.update({
+        where: { commentId },
+        data: {
+          likes: { decrement: 1 },
+          likedUserIds: {
+            set: comment.likedUserIds.filter((id) => id !== user.userId),
+          },
+        },
+      });
+
+      return res.status(200).send({
+        success: true,
+        message: "Comment unliked!",
+        liked: false,
+      });
+    } else {
+      // Like the comment
+      await prisma.comment.update({
+        where: { commentId },
+        data: {
+          likes: { increment: 1 },
+          likedUserIds: {
+            push: user.userId,
+          },
+        },
+      });
+
+      return res.status(200).send({
+        success: true,
+        message: "Comment liked!",
+        liked: true,
+      });
+    }
+  } catch (ex) {
+    console.error("Exception while liking comment:", ex);
+    return res.status(500).send("Failed to like comment");
   }
 };
 
