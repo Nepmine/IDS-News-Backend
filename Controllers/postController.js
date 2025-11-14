@@ -37,6 +37,8 @@ export const createPost = async (req, reply) => {
         author: { connect: { authorId: userResponse.authorProfile.authorId } }, // [Added] connect post to author
         article: type == "article",
         category,
+        createdAt: new Date(),
+        createdBy: req.user.email,
       },
     });
 
@@ -303,12 +305,6 @@ export const updatePost = async (req, reply) => {
     const { postId, title, headline, frontImageUrl, content, category } =
       req.body;
 
-    // [Added] Check if postId belongs to this author
-    const isOwner = userResponse.authorProfile.posts.some(
-      (post) => post.postId === postId
-    );
-    if (!isOwner) return reply.code(403).send("Only owner can update !!");
-
     // [Modified] Perform the update
     const serverResponse = await prisma.post.update({
       where: { postId },
@@ -319,6 +315,7 @@ export const updatePost = async (req, reply) => {
         content,
         category,
         updatedAt: new Date(),
+        updatedBy: req.user.email,
       },
     });
 
@@ -360,12 +357,6 @@ export const deletePost = async (req, reply) => {
 
     // [Modified] Extract postId from body
     const { postId } = req.body;
-
-    // [Added] Check if postId belongs to this author
-    const isOwner = userResponse.authorProfile.posts.some(
-      (post) => post.postId === postId
-    );
-    if (!isOwner) return reply.code(403).send("Only owner can delete post !!");
 
     // [Modified] Perform the update
     const deletedPost = await prisma.post.delete({
@@ -721,12 +712,6 @@ export const addTrending = async (req, reply) => {
     if (!userResponse.authorProfile)
       return reply.code(401).send("You don't have permission !!");
 
-    const isOwner = userResponse.authorProfile.posts.some(
-      (post) => post.postId === postId
-    );
-    if (!isOwner)
-      return reply.code(403).send("Only owner can modify trending !!");
-
     await prisma.post.update({
       where: { postId },
       data: { trending: true },
@@ -761,14 +746,6 @@ export const removeTrending = async (req, reply) => {
       return reply.code(403).send({ error: "Please Login First !!" });
     if (!userResponse.authorProfile)
       return reply.code(401).send({ error: "You don't have permission !!" });
-
-    const isOwner = userResponse.authorProfile.posts.some(
-      (post) => post.postId === postId
-    );
-    if (!isOwner)
-      return reply
-        .code(403)
-        .send({ error: "Only owner can modify trending !!" });
 
     await prisma.post.update({
       where: { postId },
