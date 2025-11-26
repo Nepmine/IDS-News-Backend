@@ -760,6 +760,8 @@ export const allTrendings = async (req, reply) => {
         postId: true,
         title: true,
         headline: true,
+        content: true,
+        category: true,
         frontImageUrl: true,
         authorId: true,
         likes: true,
@@ -767,7 +769,6 @@ export const allTrendings = async (req, reply) => {
         updatedAt: true,
         trending: true,
         comments: { select: { commentId: true } },
-        author: { select: { authorId: true } },
       },
     });
     return reply.status(200).send(posts); // [Modified] changed res → reply
@@ -860,6 +861,8 @@ export const allArticles = async (req, reply) => {
         postId: true,
         title: true,
         headline: true,
+        content: true,
+        category: true,
         frontImageUrl: true,
         authorId: true,
         likes: true,
@@ -867,7 +870,6 @@ export const allArticles = async (req, reply) => {
         updatedAt: true,
         trending: true,
         comments: { select: { commentId: true } },
-        author: { select: { authorId: true } },
       },
     });
     return reply.status(200).send(posts); // [Modified] changed res → reply
@@ -913,10 +915,17 @@ export const getCategory = async (req, reply) => {
       select: {
         postId: true,
         title: true,
+        content: true,
+        category: true,
         headline: true,
         frontImageUrl: true,
         likes: true,
         createdAt: true,
+        comments: {
+          select: {
+            commentId: true,
+          },
+        },
       },
     });
     return reply.status(200).send(posts); // [Modified] changed res → reply
