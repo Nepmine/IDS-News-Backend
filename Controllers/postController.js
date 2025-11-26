@@ -363,14 +363,23 @@ export const deletePost = async (req, reply) => {
     });
 
     // Remove postId from users who liked this post
-    await prisma.user.updateMany({
-      where: { likedPostIds: postId },
-      data: {
+    const likedUsers = await prisma.user.findMany({
+      where: {
         likedPostIds: {
-          pull: postId,
+          has: postId,
         },
       },
+      select: { userId: true, likedPostIds: true },
     });
+
+    for (const u of likedUsers) {
+      await prisma.user.update({
+        where: { userId: u.userId },
+        data: {
+          likedPostIds: u.likedPostIds.filter((id) => id !== postId), // [Modified] Manual removal
+        },
+      });
+    }
 
     // [Modified] Perform the update
     const deletedPost = await prisma.post.delete({
