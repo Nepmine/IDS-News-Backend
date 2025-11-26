@@ -230,7 +230,6 @@ export const deleteGallery = async (req, reply) => {
   }
 };
 
-// [DELETE] /api/post/deleteGalleryImage/:galleryId
 export const deleteGalleryImage = async (req, reply) => {
   try {
     const { galleryId } = req.params;
