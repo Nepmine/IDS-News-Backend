@@ -460,41 +460,6 @@ export const likePost = async (req, res) => {
   }
 };
 
-// [GET] http://localhost:8000/api/post/getHomePosts
-// Data required: postId
-export const getHomePosts = async (req, res) => {
-  try {
-    // const posts = await prisma.post.findMany();
-    const posts = await prisma.post.findMany({
-      orderBy: { createdAt: "desc" },
-      select: {
-        postId: true,
-        title: true,
-        headline: true,
-        frontImageUrl: true,
-        authorId: true,
-        likes: true,
-        createdAt: true,
-        updatedAt: true,
-        trending: true,
-        category: true,
-        content: true,
-
-        // include comments with only the fields we want
-        comments: {
-          select: {
-            commentId: true,
-          },
-        },
-      },
-    });
-    return res.status(200).send(posts);
-  } catch (ex) {
-    console.log("Exception while fetching posts ...", ex);
-    return res.status(500).send("Internal Server Error");
-  }
-};
-
 // [GET] http://localhost:8000/api/post/getPost/{postId}
 // Data required: postId
 export const getPost = async (req, res) => {
@@ -902,26 +867,35 @@ export const getRecentNews = async (req, reply) => {
 // [GET] http://localhost:8000/api/post/getCategory/{category}
 // Data required: not(postId)  ::  likes accroding to liked post stored in database
 export const getCategory = async (req, reply) => {
+  const { category = "home" } = req.params;
+  const limit = Number(process.env.DEFAULT_LIMIT) || 15;
+  const page = Number(req.query.page) || 1;
   try {
     const posts = await prisma.post.findMany({
       where: {
         category: {
-          has: req.params.category,
+          has: category,
         },
       },
+      skip: (page - 1) * limit,
+      take: limit,
       orderBy: { createdAt: "desc" },
       select: {
         postId: true,
         title: true,
         headline: true,
+        category: true,
+        content: true,
         frontImageUrl: true,
         likes: true,
         createdAt: true,
+        updatedAt: true,
+        comments: true,
       },
     });
-    return reply.status(200).send(posts); // [Modified] changed res → reply
+    return reply.status(200).send(posts);
   } catch (ex) {
     console.log("Exception while fetching articles ...", ex);
-    return reply.status(500).send("Internal Server Error fetching articles"); // [Modified]
+    return reply.status(500).send("Internal Server Error fetching articles");
   }
 };

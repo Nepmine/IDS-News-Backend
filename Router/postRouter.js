@@ -1,7 +1,6 @@
 import {
   createPost,
   likePost,
-  getHomePosts,
   getPost,
   updatePost,
   deletePost,
@@ -85,9 +84,6 @@ export default async function (fastify, opts) {
 
   // [POST Protected] http://localhost:8000/api/post/post
   fastify.post("/likePost", { preHandler: auth, schema: likeSchema }, likePost);
-
-  // [GET] http://localhost:8000/api/post/getHomePosts
-  fastify.get("/getHomePosts", getHomePosts);
 
   // [GET] http://localhost:8000/api/post/getRecentNews
   fastify.get("/getRecentNews/:recentCount", getRecentNews);
